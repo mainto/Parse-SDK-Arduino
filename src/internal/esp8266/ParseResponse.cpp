@@ -74,58 +74,58 @@ int ParseResponse::available() {
 }
 
 void ParseResponse::read() {
-    if (dataDone)
-      return;
-    if (buf == NULL) {
-      bufSize = BUFSIZE;
-      buf = new char[bufSize];
-      memset(buf, 0, bufSize);
-    }
-    if (p == bufSize - 1) {
-      return;
-    }
-    memset(buf + p, 0, bufSize - p);
-	
-    char buff[128];
+  if (dataDone)
+    return;
+  if (buf == NULL) {
+    bufSize = BUFSIZE;
+    buf = new char[bufSize];
+    memset(buf, 0, bufSize);
+  }
+  if (p == bufSize - 1) {
+    return;
+  }
+  memset(buf + p, 0, bufSize - p);
 
-    resultCount = 0;
+  char buff[128];
 
-    bool first_line = true;
-    bool ok = false;
-    bool done = false;
-	bool data = false;
-	int count=0;
-	int length = 0;
-	char c;
-    char *ptr;
-    long len = 0;
-    while (client->connected() && !done) {
-      delay(1);
-      while (client->available()) {
-		  if(data){
-			  if(length < responseLength){
-				  length++;
-			      c = client->read();
-			      if (c != '\r') { // filter out '\r' character
-			          if (p < bufSize - 1) {
-			            *(buf + p) = c;
-			            p++;
-			          }
-			      }
-			  }
-		  }
-		  else{
-		  	readLine(buff, sizeof(buff));
-			if (!strncmp(kContentLength, buff, sizeof(kContentLength)-1)) {
-				responseLength = strtol(buff + sizeof(kContentLength), &ptr, 10);
-			}
-			if(buff[0] == '\0') count++; else count = 0;
-		    if (count >= 1) data = true;
-		  }
+  resultCount = 0;
+
+  bool first_line = true;
+  bool ok = false;
+  bool done = false;
+  bool data = false;
+  int count=0;
+  int length = 0;
+  char c;
+  char *ptr;
+  long len = 0;
+  while (client->connected() && !done) {
+    delay(1);
+    while (client->available()) {
+      if(data){
+        if(length < responseLength){
+          length++;
+          c = client->read();
+          if (c != '\r') { // filter out '\r' character
+            if (p < bufSize - 1) {
+              *(buf + p) = c;
+              p++;
+            }
+          }
+        }
+      }
+      else{
+        readLine(buff, sizeof(buff));
+        if (!strncmp(kContentLength, buff, sizeof(kContentLength)-1)) {
+          responseLength = strtol(buff + sizeof(kContentLength), &ptr, 10);
+        }
+        if(buff[0] == '\0') count++; else count = 0;
+        if (count >= 1) data = true;
+      }
     }
-	if(data && length >= responseLength) {
-		done=true;
-	}
+    if(data && length >= responseLength) {
+      done=true;
+    }
   }
   if (Serial && DEBUG) {
   	Serial.println();
@@ -471,7 +471,7 @@ void ParseResponse::freeBuffer() {
 }
 
 void ParseResponse::close() {
-	client->stop();
+  client->stop();
   freeBuffer();
 }
 
