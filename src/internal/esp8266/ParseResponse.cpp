@@ -19,11 +19,14 @@
  *
  */
 
-#if defined (ARDUINO_ARCH_ESP8266)
+#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+
+//#define DEBUG_RESPONSE
 
 #include "../ParseResponse.h"
 #include "../ParseInternal.h"
 
+const bool DEBUG = false;
 static const char kHttpOK[] = "HTTP/1.1 200 OK";
 static const char kContentLength[] = "Content-Length:";
 static const char kChunkedEncoding[] = "transfer-encoding: chunked";
@@ -71,42 +74,63 @@ int ParseResponse::available() {
 }
 
 void ParseResponse::read() {
-  if (dataDone)
-    return;
-  if (buf == NULL) {
-    bufSize = BUFSIZE;
-    buf = new char[bufSize];
-    memset(buf, 0, bufSize);
-  }
-
-  if (p == bufSize - 1) {
-    return;
-  }
-
-  memset(buf + p, 0, bufSize - p);
-
-  char c;
-  int i;
-
-  bool data = false;
-  int count = 0;
-
-  while (client->connected()) {
-    delay(1);
-    while (client->available()) {
-      c = client->read();
-      if (c != '\r') { // filter out '\r' character
-        if (data) {
-          if (p < bufSize - 1) {
-            *(buf + p) = c;
-            p++;
-          }
-        }
-        // filter out the headers
-        if (c == '\n') count++; else count = 0;
-        if (count >= 2) data = true;
-      }
+    if (dataDone)
+      return;
+    if (buf == NULL) {
+      bufSize = BUFSIZE;
+      buf = new char[bufSize];
+      memset(buf, 0, bufSize);
     }
+    if (p == bufSize - 1) {
+      return;
+    }
+    memset(buf + p, 0, bufSize - p);
+	
+    char buff[128];
+
+    resultCount = 0;
+
+    bool first_line = true;
+    bool ok = false;
+    bool done = false;
+	bool data = false;
+	int count=0;
+	int length = 0;
+	char c;
+    char *ptr;
+    long len = 0;
+    while (client->connected() && !done) {
+      delay(1);
+      while (client->available()) {
+		  if(data){
+			  if(length < responseLength){
+				  length++;
+			      c = client->read();
+			      if (c != '\r') { // filter out '\r' character
+			          if (p < bufSize - 1) {
+			            *(buf + p) = c;
+			            p++;
+			          }
+			      }
+			  }
+		  }
+		  else{
+		  	readLine(buff, sizeof(buff));
+			if (!strncmp(kContentLength, buff, sizeof(kContentLength)-1)) {
+				responseLength = strtol(buff + sizeof(kContentLength), &ptr, 10);
+			}
+			if(buff[0] == '\0') count++; else count = 0;
+		    if (count >= 1) data = true;
+		  }
+    }
+	if(data && length >= responseLength) {
+		done=true;
+	}
+  }
+  if (Serial && DEBUG) {
+  	Serial.println();
+	Serial.println(buf);
+	Serial.println();
   }
   dataDone = 1;
 }
@@ -120,9 +144,15 @@ void ParseResponse::readLine(char *buff, int sz) {
     char c = client->read();
     if (c == '\r') {
       client->read(); // read /n
+#ifdef DEBUG_RESPONSE
+  Serial.println("");
+#endif
       return;
     }
     if (c == '\n') {
+#ifdef DEBUG_RESPONSE
+  Serial.println("");
+#endif
       return;
     }
 #ifdef DEBUG_RESPONSE
@@ -372,7 +402,7 @@ int ParseResponse::count() {
 #endif
       if (!strcmp(kChunkedEncoding, buff)) {
         isChunked = true;
-      } else if (!strncmp(kContentLength, buff, sizeof(kContentLength))) {
+      } else if (!strncmp(kContentLength, buff, sizeof(kContentLength)-1)) {
         responseLength = strtol(buff + sizeof(kContentLength), &ptr, 10);
       } else if (!buff[0]) {
         if (isChunked && client->available()) {
@@ -441,6 +471,7 @@ void ParseResponse::freeBuffer() {
 }
 
 void ParseResponse::close() {
+	client->stop();
   freeBuffer();
 }
 

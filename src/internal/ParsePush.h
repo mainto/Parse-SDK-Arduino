@@ -37,7 +37,7 @@ class ParsePush : public ParseResponse {
 protected:
   ParsePush(ConnectionClient* pushClient);
 
-#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266)
+#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   char lookahead[5];
   void setLookahead(const char *read_data);
   void read();

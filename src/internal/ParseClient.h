@@ -50,7 +50,7 @@ private:
 
   void read(ConnectionClient* client, char* buf, int len);
 
-#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266)
+#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   char lastPushTime[41]; // PUSH_TIME_MAX_LEN
   bool dataIsDirty;
   char pushBuff[5];
@@ -61,6 +61,15 @@ private:
 #endif
 
 public:
+
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  String parse_host = "api.parse.com";
+  String parse_push = "push.parse.com";
+  String parse_endpoint = "/parse";
+  const char* client_version = "1.0.4";
+  unsigned short parse_port = 443;
+#endif
+  
   /*! \fn ParseClient()
    *  \brief Constructor of ParseClient object
    */

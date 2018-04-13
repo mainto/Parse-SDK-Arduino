@@ -35,14 +35,14 @@
  */
 class ParseResponse {
 protected:
-  const static int BUFSIZE = 128;
+  const static int BUFSIZE = 256;
   int bufSize;
   char* buf;
   char* tmpBuf;
   bool isUserBuffer;
   int p;
   int resultCount;
-#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266)
+#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   long responseLength;
   bool isChunked;
   bool firstObject;
@@ -56,7 +56,7 @@ protected:
   virtual void read();
   void readWithTimeout(int maxSec);
 
-#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266)
+#if defined (ARDUINO_SAMD_ZERO) || defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   // Zero functions only - do nothing on Yun
   void readLine(char *buff, int sz);
   bool readJson(char *buff, int sz);

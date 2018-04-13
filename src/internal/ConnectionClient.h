@@ -14,7 +14,7 @@ typedef WiFiClient ConnectionClient;
 #include <Bridge.h>
 typedef Process ConnectionClient;
 
-#elif ARDUINO_ARCH_ESP8266
+#elif ARDUINO_ARCH_ESP8266 || ARDUINO_ARCH_ESP32
 
 #include <WiFiClientSecure.h>
 typedef WiFiClientSecure ConnectionClient;

@@ -19,19 +19,14 @@
  *
  */
 
-#if defined (ARDUINO_ARCH_ESP8266)
+#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #include "../ParseClient.h"
 //#include "../../external/FlashStorage/FlashStorage.h"
 #include <sys/time.h>
 
 // Set DEBUG to true to see serial debug output for the main stages
 // of the Parse client.
-const bool DEBUG = true;
-const char* PARSE_API = "api.parse.com";
-const char* USER_AGENT = "arduino-esp8266.v.1.0.1";
-const char* CLIENT_VERSION = "1.0.3";
-const char* PARSE_PUSH = "push.parse.com";
-const unsigned short SSL_PORT = 443;
+const bool DEBUG = false;
 
 struct KeysInternalStorage {
   bool assigned;
@@ -182,11 +177,9 @@ ParseResponse ParseClient::sendRequest(const char* httpVerb, const char* httpPat
 }
 
 ParseResponse ParseClient::sendRequest(const String& httpVerb, const String& httpPath, const String& requestBody, const String& urlParams) {
-  char buff[91] = {0};
-  //client.stop();
-
+  char buff[256];
+  // client.stop();
   saveKeys();
-
   if (Serial && DEBUG) {
     Serial.print("sendRequest(\"");
     Serial.print(httpVerb.c_str());
@@ -198,11 +191,11 @@ ParseResponse ParseClient::sendRequest(const String& httpVerb, const String& htt
     Serial.print(urlParams.c_str());
     Serial.println("\")");
   }
-
+  
   int retry = 3;
   bool connected;
-
-  while(!(connected = client.connect(PARSE_API, SSL_PORT)) && retry--) {
+	  
+  while(!(connected = client.connect(parse_host.c_str(), parse_port)) && retry--) {
     Serial.printf("connecting...%d\n", retry);
     yield();
   }
@@ -215,14 +208,14 @@ ParseResponse ParseClient::sendRequest(const String& httpVerb, const String& htt
       Serial.println(installationId);
     }
     if (urlParams.length() > 0) {
-        snprintf(buff, sizeof(buff) - 1, "%s %s?%s HTTP/1.1\r\n", httpVerb.c_str(), httpPath.c_str(), urlParams.c_str());
+        snprintf(buff, sizeof(buff) - 1, "%s %s?%s HTTP/1.1\r\n", httpVerb.c_str(), (parse_endpoint+httpPath).c_str(), urlParams.c_str());
     } else {
-        snprintf(buff, sizeof(buff) - 1, "%s %s HTTP/1.1\r\n", httpVerb.c_str(), httpPath.c_str());
+        snprintf(buff, sizeof(buff) - 1, "%s %s HTTP/1.1\r\n", httpVerb.c_str(), (parse_endpoint+httpPath).c_str());
     }
     sendAndEchoToSerial(client, buff);
-    snprintf(buff, sizeof(buff) - 1, "Host: %s\r\n",  PARSE_API);
+    snprintf(buff, sizeof(buff) - 1, "Host: %s\r\n",  parse_host.c_str());
     sendAndEchoToSerial(client, buff);
-    snprintf(buff, sizeof(buff) - 1, "X-Parse-Client-Version: %s\r\n", CLIENT_VERSION);
+    snprintf(buff, sizeof(buff) - 1, "X-Parse-Client-Version: %s\r\n", client_version);
     sendAndEchoToSerial(client, buff);
     snprintf(buff, sizeof(buff) - 1, "X-Parse-Application-Id: %s\r\n", applicationId);
     sendAndEchoToSerial(client, buff);
@@ -271,7 +264,7 @@ bool ParseClient::startPushService() {
     int retry = 3;
     bool connected;
 
-    while(!(connected = pushClient.connect(PARSE_PUSH, SSL_PORT)) && retry--);
+    while(!(connected = pushClient.connect(parse_push.c_str(), parse_port)) && retry--);
 
     if (connected) {
         if (Serial && DEBUG)
