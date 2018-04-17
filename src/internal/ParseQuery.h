@@ -239,6 +239,9 @@ public:
    *  \result response of the request.
    */
   ParseResponse send();
+  
+  String subscribeJsonWithRequestId(int reqId);
+ 
 };
 
 #endif

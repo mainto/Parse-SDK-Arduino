@@ -191,3 +191,20 @@ ParseResponse ParseQuery::send() {
 	return Parse.sendRequest("GET", httpPath, "", urlParameters);
 }
 
+String ParseQuery::subscribeJsonWithRequestId(int reqId) {
+	String json = "{\"op\":\"subscribe\",\"requestId\":"+ String(reqId) +",\"query\":{\"className\":\"" + this->className + "\"";
+    if (whereClause != "") {
+      whereClause += "}"; // close where clause if there is any
+      json += ",\"where\":";
+      json += whereClause;
+    }
+	if (returnedFields != "") {
+		json += ",\"fields\":[\"";
+		//TODO: handle comma seperated
+		json += returnedFields;
+		json += "\"]";
+	}
+	json += "}}";
+	return json;
+}
+

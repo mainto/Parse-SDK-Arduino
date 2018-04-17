@@ -35,6 +35,7 @@
  */
 class ParseRequest {
 protected:
+	String className;
 	String httpPath;
 	String requestBody;
 	bool isBodySet;

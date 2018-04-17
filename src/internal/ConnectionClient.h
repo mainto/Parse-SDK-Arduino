@@ -17,6 +17,7 @@ typedef Process ConnectionClient;
 #elif ARDUINO_ARCH_ESP8266 || ARDUINO_ARCH_ESP32
 
 #include <WiFiClientSecure.h>
+#include <external/WebSocket/WebSocketClient.h>
 typedef WiFiClientSecure ConnectionClient;
 
 #endif

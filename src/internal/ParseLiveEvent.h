@@ -19,33 +19,37 @@
  *
  */
 
-#include "ParseInternal.h"
-#include "ParseRequest.h"
+#ifndef ParseLiveEvent_h
+#define ParseLiveEvent_h
 
-ParseRequest::ParseRequest() {
-	requestBody = "{";
-	httpPath = "/";
-	isBodySet = false;
-}
+#include "ConnectionClient.h"
+#include "ParseResponse.h"
 
-ParseRequest::~ParseRequest() {
-}
+/*! \file ParseLiveEvent_h.h
+ *  \brief ParseLiveEvent_h object for the esp32
+ *  include Parse.h, not this file
+ */
 
-void ParseRequest::setObjectId(const char* key) {
-	httpPath += "/";
-	httpPath += key;
-}
+/*! \class ParseLiveEvent
+ *  \brief Class with a LiveQuery. Not created directly.
+ */
+class ParseLiveEvent {
+protected:
+  ParseLiveEvent(String response);
 
-void ParseRequest::setClassName(const char* className) {
-	this->className = className;
-	if (className == "_User") {
-		httpPath += "users";
-	} else if (className == "_Installation") {
-		httpPath += "installations";
-	} else if (className == "_Role") {
-		httpPath += "roles";
-	} else {
-		httpPath += "classes/";
-		httpPath += className;
-	}
-}
+public:
+  String response;
+  String op;
+  int requestId;
+  int errorCode;
+
+  /*! \fn void close()
+   *  \brief free resource including data buffer.
+   *
+   */
+  void close();
+
+  friend class ParseClient;
+};
+
+#endif

@@ -27,6 +27,8 @@
 #include "ConnectionClient.h"
 #include "ParseResponse.h"
 #include "ParsePush.h"
+#include "ParseLiveEvent.h"
+#include "ParseQuery.h"
 
 /*! \file ParseClient.h
  *  \brief ParseClient object for the Yun
@@ -45,6 +47,9 @@ private:
 
   ConnectionClient client;
   ConnectionClient pushClient;
+  ConnectionClient liveQueryClient;
+  WebSocketClient webSocketClient;
+  String liveQueryResponse;
 
   unsigned long lastHeartbeat;
 
@@ -190,6 +195,14 @@ public:
    */
   ParseResponse sendRequest(const String& httpVerb, const String& httpPath, const String& requestBody, const String& urlParams);
 
+
+  bool startLiveQuerey();
+  void stopLiveQuery();
+  bool isLiveEventAvailable();
+  ParseLiveEvent liveEvent();
+  void subscribe(ParseQuery query, int requestId);
+  void unsubscribe(int requestId);
+  
   /*! \fn int startPushService()
    *  \brief Start the push notifications service.
    *

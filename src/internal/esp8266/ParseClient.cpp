@@ -26,7 +26,7 @@
 
 // Set DEBUG to true to see serial debug output for the main stages
 // of the Parse client.
-const bool DEBUG = false;
+const bool DEBUG = true;
 
 struct KeysInternalStorage {
   bool assigned;
@@ -251,6 +251,84 @@ ParseResponse ParseClient::sendRequest(const String& httpVerb, const String& htt
   }
   ParseResponse response(&client);
   return response;
+}
+
+bool ParseClient::startLiveQuerey() {
+  int retry = 3;
+  bool connected;
+  Serial.println("startLiveQuerey");
+  
+  while(!(connected = liveQueryClient.connect(parse_host.c_str(), parse_port)) && retry--) {
+    Serial.printf("connecting...%d\n", retry);
+    yield();
+  }
+  
+  webSocketClient.path = (char*)"/";
+  webSocketClient.host = (char*)parse_host.c_str();
+  if (webSocketClient.handshake(liveQueryClient)) {
+    if (Serial && DEBUG)
+      Serial.println("Handshake successful");
+  } else {
+    if (Serial && DEBUG)
+      Serial.println("Handshake failed.");
+    return false;
+  }
+  
+  if (!liveQueryClient.connected()) {
+    if (Serial && DEBUG)
+      Serial.println("connect failed.");
+    return false;
+  }
+  
+  char buff[256];
+  snprintf(buff, sizeof(buff) - 1, "{\"op\":\"connect\",\"applicationId\":\"%s\"}",  applicationId);
+	Serial.println();
+	Serial.print("==> ");
+	Serial.println(buff);
+  webSocketClient.sendData(buff);
+  return true;
+}
+
+void ParseClient::stopLiveQuery() {
+  liveQueryClient.stop();
+}
+
+bool ParseClient::isLiveEventAvailable() {
+	if(!liveQueryClient.connected()) {
+		Serial.println("live query socket disconnected");
+		return false;
+	}
+	String liveQueryResponse;
+	webSocketClient.getData(liveQueryResponse);
+    if (liveQueryResponse.length() > 0) {
+		this->liveQueryResponse = liveQueryResponse;
+		return true;
+    }
+	return false;
+}
+
+ParseLiveEvent ParseClient::liveEvent() {
+	ParseLiveEvent event = ParseLiveEvent(this->liveQueryResponse);
+	this->liveQueryResponse = "";
+	return event;
+}
+
+
+void ParseClient::subscribe(ParseQuery query, int requestId) {
+	if(!liveQueryClient.connected()) return;
+    String json = query.subscribeJsonWithRequestId(requestId);
+	Serial.println();
+	Serial.print("==> ");
+	Serial.println(json);
+    webSocketClient.sendData(json);
+}
+void ParseClient::unsubscribe(int requestId) {
+	if(!liveQueryClient.connected()) return;
+	String json = "{\"op\":\"unsubscribe\",\"requestId\","+ String(requestId) +"}";
+	Serial.println();
+	Serial.print("==> ");
+	Serial.println(json);
+	webSocketClient.sendData(json);
 }
 
 bool ParseClient::startPushService() {
