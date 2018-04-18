@@ -195,13 +195,72 @@ public:
    */
   ParseResponse sendRequest(const String& httpVerb, const String& httpPath, const String& requestBody, const String& urlParams);
 
-
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) 
+  /*! \fn bool startLiveQuerey()
+   *  \brief Start the live query service.
+   *
+   *  This method will start the live query service and will listen for incoming
+   *  live query event. If the live query service is already started, this will do nothing.
+   *  To actually process incoming live query event, it is still necessary to repeatedly
+   *  call
+   *  \code
+   *  if (Parse.isLiveEventAvailable()) {
+   *    ParseLiveEvent event = Parse.liveEvent();
+   *    // Process live event here
+   *    ...
+   *  }
+   *  \endcode
+   *
+   *  \result                    false if the live query can't be started or true if
+   *                             started successfully.
+   */
   bool startLiveQuerey();
+   
+  /*! \fn void stopLiveQuery()
+   *  \brief Stop the live query service.
+   *
+   *  This method will stop the live query service. If the live query service is not started,
+   *  this will do nothing.
+   */
   void stopLiveQuery();
+  
+  /*! \fn bool isLiveEventAvailable()
+   *  \brief Check if there is any new live query event.
+   *
+   *  use only after startLiveQuerey()
+   *
+   *  \result                    true if there is a live query event, false otherwise.
+   */
   bool isLiveEventAvailable();
+  
+  /*! \fn ParseLiveEvent liveEvent()
+   *  \brief Get live query event.
+   *
+   *  NOTE: use only when isLiveEventAvailable() is TRUE
+   *
+   *  \result                    a ParseLiveEvent instance
+   */
   ParseLiveEvent liveEvent();
+  
+  /*! \fn subscribe(ParseQuery query, int requestId)
+   *  \brief Subscribe the query as live query
+   *
+   *  use only after connected ParseLiveEvent is returned (ParseLiveEvent.op == "connected")
+   *
+   *  \param query         ParseQuery instance for live query. (required)
+   *  \param requestId     The live query request id. (required)
+   */
   void subscribe(ParseQuery query, int requestId);
+  
+  /*! \fn unsubscribe(int requestId)
+   *  \brief Unsubscribe a live query with request id.
+   *
+   *  use only after subscribe live query
+   *
+   *  \param requestId     The live query request id. (required)
+   */
   void unsubscribe(int requestId);
+#endif
   
   /*! \fn int startPushService()
    *  \brief Start the push notifications service.

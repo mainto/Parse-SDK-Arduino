@@ -254,6 +254,7 @@ ParseResponse ParseClient::sendRequest(const String& httpVerb, const String& htt
 }
 
 bool ParseClient::startLiveQuerey() {
+  if(liveQueryClient.connected()) return true;
   int retry = 3;
   bool connected;
   Serial.println("startLiveQuerey");
